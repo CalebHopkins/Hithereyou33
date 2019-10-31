@@ -5,7 +5,7 @@ Disallow: /search.html
 User-agent: *
 Disallow: /adblocknotice.html
 User-agent: *
-Disallow: /license/flashmath2.txt
+Disallow: /license/flashmath1.txt
 User-agent: *
 Disallow: /javascript_login.html
 User-agent: *
