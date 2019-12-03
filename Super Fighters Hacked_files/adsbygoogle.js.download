@@ -1,0 +1,8 @@
+(function(){
+var drutBaseName = window.location.href.split('').reduce(function(a,b){return(a<<5)-a+b.charCodeAt(0)>>>1},0).toString(36);
+var blockTestElementId = window.location.hostname.replace(/[^\w]/g,'_') + '_' + drutBaseName;
+var e = document.createElement('div');
+e.id=blockTestElementId;
+e.style.display='none';
+document.body.appendChild(e);
+})();

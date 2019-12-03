@@ -1,0 +1,64 @@
+$(document).ready(function(){var page=window.location.hash.split("-");if(page[1]>1&&page[0].indexOf("com")===-1){gotopage(page[1]);}})
+var http_request=false;function makePOSTRequest(url,parameters,type,id,id2){http_request=false;var randnum=Math.random();randnum=randnum*100;var parameters=parameters+"&nocache="+randnum;if(window.XMLHttpRequest){http_request=new XMLHttpRequest();if(http_request.overrideMimeType){http_request.overrideMimeType('text/html');}}else if(window.ActiveXObject){try{http_request=new ActiveXObject("Msxml2.XMLHTTP");}catch(e){try{http_request=new ActiveXObject("Microsoft.XMLHTTP");}catch(e){}}}
+if(!http_request){alert('Cannot create XMLHTTP instance');return false;}
+if(type=="aj-comments"||type=="aj-comments-gotopage"){http_request.onreadystatechange=return_all;}
+if(type=="aj-comments-new"){http_request.onreadystatechange=return_post;}
+if(type=="aj-comments-reply"){http_request.onreadystatechange=function(){if(http_request.readyState==4){if(http_request.status==200){result=http_request.responseText;result=result.split("{|}");var divremove=document.getElementById("replyform-"+id2);$response=$(result[0]);var isError=$response.attr('class');if(isError=='error'){$(divremove).replaceWith(result[0]);}else{var hasReplies=$("#comwrap-"+id).children('#com-replies-'+id);if(hasReplies.length==0){$("#comwrap-"+id).children().after("<div id='com-replies-"+id+"'>"+result[0]+"</div>");}else{$('#com-replies-'+id).children(":last-child").after(result[0]);}
+$(divremove).remove();smoothScroll('comlink-'+result[1]);}}}}}
+if(type=="aj-comments-rateup"){document.getElementById("com-ratingcode-"+id).innerHTML="<span class='aj-rating-good-stale'></span><span class='aj-rating-bad-stale'></span>";http_request.onreadystatechange=function(){if(http_request.readyState==4){if(http_request.status==200){result=http_request.responseText;if(result>0){var result="<span class='aj-good-num'>+"+result+"</span>";}
+if(result<0){var result="<span class='aj-bad-num'>"+result+"</span>";}
+document.getElementById("com-rating-"+id).innerHTML=result;}}}}
+if(type=="aj-comments-ratedown"){document.getElementById("com-ratingcode-"+id).innerHTML="<span class='aj-rating-good-stale'></span><span class='aj-rating-bad-stale'></span>";http_request.onreadystatechange=function(){if(http_request.readyState==4){if(http_request.status==200){result=http_request.responseText;if(result>0){var result="<span class='aj-good-num'>+"+result+"</span>";}
+if(result<0){var result="<span class='aj-bad-num'>"+result+"</span>";}
+document.getElementById("com-rating-"+id).innerHTML=result;}}}}
+if(type=="aj-comments-delcom"){http_request.onreadystatechange=function(){if(http_request.readyState==4){if(http_request.status==200){}}}}
+http_request.open('GET',url+'?'+parameters,true);http_request.send(null);}
+function return_all(){if(document.getElementById('aj-comments')){document.getElementById('loading-message').style.display='block';$('#aj-comments-wrap2').css('min-height','300px');}
+if(http_request.readyState==4){if(http_request.status==200){var showres=function showresults(result){result=http_request.responseText;document.getElementById('aj-comments').innerHTML=result;document.getElementById('loading-message').style.display='none';$('#aj-comments-wrap2').css('min-height','');}
+setTimeout(showres,750);}else{alert('Hmm. There is a server problem. We will fix it as soon as we can.');}}}
+function return_post(){if(http_request.readyState==4){if(http_request.status==200){$('.error').remove();$('.info').remove();result=http_request.responseText;var divTag=document.createElement("div");divTag.innerHTML=result;document.getElementById('aj-comments-new').insertBefore(divTag,document.getElementById('aj-comments-new').firstChild);}else{}}}
+function post_com(obj){var poststr="aj_comment="+escape(encodeURI(document.getElementById("aj_comment_0").value))+"&aj_lastcomid="+escape(encodeURI(document.getElementById("aj_lastcomid").value));makePOSTRequest('/plugins/site/themes/arcadeprehacks/aj_comments_controller.php',poststr,'aj-comments-new');document.getElementById("aj-comments-new").style.display='block';document.getElementById("aj_comment_0").value='';}
+function post_reply(id,id2){if(typeof id2!='undefined'){var id_to_reply=id2;}else{var id_to_reply=id;}
+var poststr="aj_comment="+escape(encodeURI(document.getElementById("aj_comment_"+id).value))+"&aj_replyto="+id+"&commreply="+id_to_reply;makePOSTRequest('/plugins/site/themes/arcadeprehacks/aj_comments_controller.php',poststr,'aj-comments-reply',id,id2);}
+function get_inner_height(){var h=document.body.clientWidth;return h?h:0;}
+function get_scroll_height(){var h=window.pageYOffset||document.body.scrollTop||document.documentElement.scrollTop;return h?h:0;}
+function page_height(){return Math.max(document.body.scrollHeight,document.body.offsetHeight);}
+function queue_check_scroll(){setTimeout("get_default_coms()",1);}
+function near_bottom(){var active_comments_zone=game_height;return get_scroll_height()>active_comments_zone;}
+function scroll_distance_from_bottom(){return page_height()-(get_scroll_height()+get_inner_height());}
+function get_default_coms(){var poststr="act=allcoms";if(near_bottom()){makePOSTRequest('/plugins/site/themes/arcadeprehacks/aj_comments_controller.php',poststr,'aj-comments');}else{queue_check_scroll();}}
+function replyform(id,parentid){$('.info,.error').remove();var checkdiv=document.getElementById("replyform-"+id);if(parentid){var comid=parentid;}else{var comid=id;}
+if(checkdiv){}else{var newdiv=document.createElement("div");var divid='replyform-'+id;var idstr=comid+','+id;newdiv.setAttribute("id",divid);newdiv.innerHTML='<form action="javascript:post_reply('+idstr+');" name="aj_replyform" id="aj_replyform"><table><td><span class="msgbox"><textarea name="aj_comment" id="aj_comment_'+comid+'" class="style_reply" rows="8" cols="25" onKeyDown="textCounter(\''+comid+'\');" onKeyUp="textCounter(\''+comid+'\');"></textarea></span></td><td class="chars-left"><span id="chars-'+comid+'" class="chars">250</span> chars left</td></tr><tr><td><input type="submit" name="AJ_SUBCOM" value="" class="sendcomm"/> <button type="button" onclick="javascript:post_disc('+id+');" class="cancelcomm"></button></td></tr></table></form>';var parent=document.getElementById("com-"+id);parent.appendChild(newdiv);}}
+function post_disc(id){var divremove=document.getElementById("replyform-"+id);divremove.parentNode.removeChild(divremove);}
+function post_hide(id){document.getElementById("aj-com-text-"+id).style.display='none';document.getElementById("hideshow-"+id).innerHTML='Show';document.getElementById("hideshow-"+id).href='javascript:post_show('+id+');';}
+function post_show(id){document.getElementById("aj-com-text-"+id).style.display='block';document.getElementById("hideshow-"+id).innerHTML='Hide';document.getElementById("hideshow-"+id).href='javascript:post_hide('+id+');';}
+function user_hideposts(id){var poststr='act=user_hideposts&id='+id;makePOSTRequest('/plugins/site/themes/arcadeprehacks/aj_comments_controller.php',poststr,'aj-comments-hideuserposts',id);}
+function user_showposts(id){var poststr='act=user_showposts&id='+id;makePOSTRequest('/plugins/site/themes/arcadeprehacks/aj_comments_controller.php',poststr,'aj-comments-showuserposts',id);}
+function rateup(id){var poststr='act=rateup&id='+id;makePOSTRequest('/plugins/site/themes/arcadeprehacks/aj_comments_controller.php',poststr,'aj-comments-rateup',id);}
+function ratedown(id){var poststr='act=ratedown&id='+id;makePOSTRequest('/plugins/site/themes/arcadeprehacks/aj_comments_controller.php',poststr,'aj-comments-ratedown',id);}
+function gotopage(id,sortid,filterid){var poststr='act=gotopage&pageid='+id+'&sortid='+escape(encodeURI(document.getElementById("sort").value))+'&filterid='+escape(encodeURI(document.getElementById("filter").value))+'&perpage='+escape(encodeURI(document.getElementById("perpage").value));makePOSTRequest('/plugins/site/themes/arcadeprehacks/aj_comments_controller.php',poststr,'aj-comments-gotopage',id);document.getElementById("aj-comments-new").style.display='none';return false;}
+function resetform(){}
+function delcom(id){var poststr='act=delcom&id='+id;document.getElementById("com-"+id).style.display='none';makePOSTRequest('/plugins/site/themes/arcadeprehacks/aj_comments_controller.php',poststr,'aj-comments-delcom',id);}
+function currentYPosition(){if(self.pageYOffset)
+return self.pageYOffset;if(document.documentElement&&document.documentElement.scrollTop)
+return document.documentElement.scrollTop;if(document.body.scrollTop)
+return document.body.scrollTop;return 0;}
+function elmYPosition(eID){var elm=document.getElementById(eID);var y=elm.offsetTop;var node=elm;while(node.offsetParent&&node.offsetParent!=document.body){node=node.offsetParent;y+=node.offsetTop;}
+return y;}
+function smoothScroll(eID){var startY=currentYPosition();var stopY=elmYPosition(eID);var distance=stopY>startY?stopY-startY:startY-stopY;if(distance<100){scrollTo(0,stopY);return;}
+var speed=Math.round(distance/40);var step=Math.round(distance/25);var leapY=stopY>startY?startY+step:startY-step;var timer=0;if(stopY>startY){for(var i=startY;i<stopY;i+=step){setTimeout("window.scrollTo(0, "+leapY+")",timer*speed);leapY+=step;if(leapY>stopY)
+leapY=stopY;timer++;}
+return;}
+for(var i=startY;i>stopY;i-=step){setTimeout("window.scrollTo(0, "+leapY+")",timer*speed);leapY-=step;if(leapY<stopY)
+leapY=stopY;timer++;}}
+function slideLeft()
+{if(typeof window.pboPage==='undefined'){return;}
+if(window.pboPage==1){return;}
+$("#pboGames"+(parseInt(window.pboPage)-1)).animate({left:5});$("#pboGames"+window.pboPage).animate({left:582});window.pboPage=parseInt(window.pboPage)-1;changeArrows();}
+function slideRight()
+{if(typeof window.pboPage!=='undefined'&&window.pboPage==3){return;}
+if(typeof window.pboPage==='undefined'){window.pboPage=2;}else{window.pboPage=window.pboPage+1;}
+if(typeof window.gotGames==='undefined'){window.gotGames=new Array();window.gotGames[window.pboPage]=true;$.get('/get_more_games.html',function(data){$("#pboGames"+(parseInt(window.pboPage)-1)).after("<div id='pboGames"+window.pboPage+"' style='width:301px; '>"+data+"</div>");});}else{if(typeof window.gotGames[window.pboPage]==='undefined'){window.gotGames[window.pboPage]=true;$.get('/get_more_games.html',function(data){$("#pboGames"+(parseInt(window.pboPage)-1)).after("<div id='pboGames"+window.pboPage+"' style='width:301px; '>"+data+"</div>");});}}
+$("#pboGames"+(parseInt(window.pboPage)-1)).animate({left:-291});$("#pboGames"+window.pboPage).animate({left:5});changeArrows();}
+function changeArrows(){switch(window.pboPage){case 1:$("#arrowleft").attr("src",$("#arrowleft").attr("src").replace("left-arrow","left-arrow-dim"));break;case 2:$("#arrowleft").attr("src",$("#arrowleft").attr("src").replace("left-arrow-dim","left-arrow"));$("#arrowright").attr("src",$("#arrowright").attr("src").replace("right-arrow-dim","right-arrow"));break;case 3:$("#arrowright").attr("src",$("#arrowright").attr("src").replace("right-arrow","right-arrow-dim"));break;}}
+function lightsControl(){var hackbar=$('#hackbar')?true:false;if(typeof window.light=='undefined'||window.light==1){$("body").append('<div class="lightoff"></div>');$("#container").css("position","static");$(".lightoff").click(function(){lightsControl();});$('#rightad').css('opacity','0');$('#mod-tafad').css('opacity','0');$('.lightbox').attr("src","/plugins/site/themes/arcadeprehacks/img/normal-button.png");window.light=0;}else{window.light=1;$("#container").css("position","relative");$('.lightoff').remove();$('#rightad').css('opacity','100');$('#mod-tafad').css('opacity','100');$('.lightbox').attr("src","/plugins/site/themes/arcadeprehacks/img/light-button.png");}}
